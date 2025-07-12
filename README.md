@@ -51,7 +51,8 @@ using ntt1_type =
             modulus_type, n1,
             RadixEightSVELayer<modmul_type, n1, n1 >> 3>,
             RadixEightSVELayer<modmul_type, n1, n1 >> 6>
-        >
+        >,
+        false
     >;
 
 // Adopt the blocked six-step NTT using the above inner NTTs and transposition.
@@ -63,7 +64,7 @@ using ntt_type =
             ntt0_type, 32, 2, 128,
             transposition_type
         >,
-        ntt1_type, 256, true
+        ntt1_type, true
     >;
 
 // Instantiate the NTT, which involves precomputations.
@@ -110,17 +111,15 @@ You need first to configure the build system.
 Since the SVE is not *completely* scalable, some parameters such as the number
 of shuffle stages vary depending on the vector length; thus, the vector length
 needs to be fixed at compile time.
-Note that although SVE supports variable vector lengths from 128 to 2048 bits
-depending on the processor, **this implementation currently only supports
-512-bit vectors**.
-Keep watching this repository for future updates!
+This library currently supports 128-bit, 256-bit, and 512-bit SVE units, which
+covers all the processors publicly available (as of July 2025).
 
 You can specify this using the `-msve-vector-bits=<bits>` compiler option, where
 `<bits>` is the vector length in bits.
 To obtain the best performance, you also need to enable optimizations towards
-your target architecture using the `-mcpu=<uarch>`, `-mtune=<uarch>`, and
-`-Ofast` compiler options, where `<uarch>` is the target microarchitecture.
-The example values are as follows:
+your target processor using the `-mcpu=<uarch>`, `-mtune=<uarch>`, and `-Ofast`
+compiler options, where `<uarch>` is the target microarchitecture.
+The example combinations of these values are as follows:
 
 | Microarchitecture | Implemented/used in | `<uarch>` | `<bits>` |
 | -- | -- | -- | -- |
@@ -129,9 +128,9 @@ The example values are as follows:
 | Arm Neoverse V2 | AWS Graviton4, Azure Cobalt 100, Google Axion, NVIDIA Grace | `neoverse-v2` | `128` |
 | Arm Neoverse V3 | NVIDIA Thor | `neoverse-v3` | `128` |
 
-You can specify these options when configuring the build.
+You can specify these options on build configuration.
 For example, to build and run the tests and benchmarks for the Fujitsu A64FX
-processor, you can run the following commands:
+processor, run the following commands:
 
 ```console
 $ cmake . -D CMAKE_CXX_FLAGS='-msve-vector-bits=512 -mcpu=a64fx -mtune=a64fx -Ofast'
