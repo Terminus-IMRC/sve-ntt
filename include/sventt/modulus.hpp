@@ -6,9 +6,11 @@
 
 #include <bit>
 #include <cstdint>
+#include <stdexcept>
 
 namespace sventt {
 
+/* Note: Assuming the modulus is prime. */
 template <std::uint64_t modulus, std::uint64_t generator = 0> class Modulus {
 
 public:
@@ -95,13 +97,21 @@ public:
     return power(a, modulus - 2);
   }
 
-  /* Note: Assuming the modulus is prime and has the specified root. */
-  static constexpr std::uint64_t get_root_forward(const std::uint64_t order) {
+  static constexpr std::uint64_t get_root_forward(const std::uint64_t order)
+    requires(generator != 0)
+  {
+    if ((modulus - 1) % order != 0) {
+      throw std::invalid_argument{"the field has no such root"};
+    }
     return power(generator, (modulus - 1) / order);
   }
 
-  /* Note: Assuming the modulus is prime and has the specified root. */
-  static constexpr std::uint64_t get_root_inverse(const std::uint64_t order) {
+  static constexpr std::uint64_t get_root_inverse(const std::uint64_t order)
+    requires(generator != 0)
+  {
+    if ((modulus - 1) % order != 0) {
+      throw std::invalid_argument{"the field has no such root"};
+    }
     return power(generator, Modulus<modulus - 1>::multiply(
                                 (modulus - 1) / order, modulus - 2));
   }
