@@ -23,11 +23,11 @@ using inner_kernel_type = sventt::RecursiveNTT<
     modulus_type, std::uint64_t{1} << 10,
     sventt::RadixTwoSVELayer<modmul_type, std::uint64_t{1} << 10,
                              std::uint64_t{1} << 10, 1, false>,
-    inner_inner_kernel_type, 256, false>;
+    inner_inner_kernel_type, false>;
 
 using kernel_type =
     sventt::RecursiveNTT<modulus_type, m,
                          sventt::RadixEightSVELayer<modmul_type, m, m, 1, true>,
-                         inner_kernel_type, 256, false>;
+                         inner_kernel_type, false>;
 
 const std::string name{"recursive, SVE, radix-2,4,8"};

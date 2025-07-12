@@ -13,8 +13,7 @@
 namespace sventt {
 
 template <class modulus_type_, std::uint64_t m, class layer_type_,
-          class inner_kernel_type_, std::uint64_t alignment,
-          bool separate_twiddle>
+          class inner_kernel_type_, bool separate_twiddle>
 class RecursiveNTT {
 
 public:
