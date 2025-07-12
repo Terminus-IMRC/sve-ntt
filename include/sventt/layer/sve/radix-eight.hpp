@@ -436,9 +436,9 @@ public:
                                          omega83, omega83_precomp);
 
           modmul_type::butterfly_forward(x0, x4);
-          modmul_type::butterfly_forward(x1, x5, omega81, omega81_precomp);
-          modmul_type::butterfly_forward(x2, x6, omega82, omega82_precomp);
-          modmul_type::butterfly_forward(x3, x7, omega83, omega83_precomp);
+          modmul_type::butterfly_forward(x1, x5);
+          modmul_type::butterfly_forward(x2, x6);
+          modmul_type::butterfly_forward(x3, x7);
 
           interleave_and_store<3>(&dst[j], x0, x1, x2, x3, x4, x5, x6, x7);
         }

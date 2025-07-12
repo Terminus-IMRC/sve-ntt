@@ -13,8 +13,7 @@
 namespace sventt {
 
 template <class modulus_type_, std::uint64_t m, class layer_type_,
-          class inner_kernel_type_, std::uint64_t alignment,
-          bool separate_twiddle>
+          class inner_kernel_type_, bool separate_twiddle>
 class RecursiveNTT {
 
 public:
@@ -88,10 +87,6 @@ public:
     compute_forward(dst, dst, aux);
   }
 
-  static void
-  descramble_forward([[maybe_unused]] std::uint64_t *const dst,
-                     [[maybe_unused]] const std::uint64_t *const src) {}
-
   template <class vector_type> static void prepare_inverse(vector_type &aux) {
     /* aux size, to be corrected later */
     aux.template push_back<std::uint64_t>({});
@@ -147,10 +142,6 @@ public:
   static void compute_inverse(std::uint64_t *const dst, const std::byte *&aux) {
     compute_inverse(dst, dst, aux);
   }
-
-  static void
-  descramble_inverse([[maybe_unused]] std::uint64_t *const dst,
-                     [[maybe_unused]] const std::uint64_t *const src) {}
 };
 
 } // namespace sventt

@@ -81,11 +81,11 @@ public:
         throw std::invalid_argument{"SVE vector length is too large"};
       }
       std::uint64_t omega_n_1i_n40{1};
-      precompute(1, omega_n_1i_n40, omega_n_1, true);
+      precompute(4, omega_n_1i_n40, omega_n_1, true);
       std::uint64_t omega_n_1i_n41{omega_n41};
-      precompute(1, omega_n_1i_n41, omega_n_1, true);
+      precompute(4, omega_n_1i_n41, omega_n_1, true);
       std::uint64_t omega_2i_n20{1};
-      precompute(1, omega_2i_n20, omega_n_2, true);
+      precompute(4, omega_2i_n20, omega_n_2, true);
     } else {
       throw std::invalid_argument{"Unsupported SVE vector length"};
     }
@@ -179,33 +179,67 @@ public:
     } else if constexpr (n == 16) {
       svuint64_t omega_i, omega_i_precomp, omega_i_n4, omega_i_n4_precomp,
           omega_2i, omega_2i_precomp;
-      broadcast_and_advance(omega_i, omega_i_precomp, omega_i_n4,
-                            omega_i_n4_precomp, omega_2i, omega_2i_precomp,
-                            aux);
+      if constexpr (cntd == 8) {
+        omega_i = svld1(ptrue, aux);
+        aux += cntd;
+        omega_i_precomp = svzip2(omega_i, omega_i);
+        omega_i = svzip1(omega_i, omega_i);
+
+        omega_i_n4 = svld1(ptrue, aux);
+        aux += cntd;
+        omega_i_n4_precomp = svzip2(omega_i_n4, omega_i_n4);
+        omega_i_n4 = svzip1(omega_i_n4, omega_i_n4);
+
+        omega_2i = svld1(ptrue, aux);
+        aux += cntd;
+        omega_2i_precomp = svzip2(omega_2i, omega_2i);
+        omega_2i = svzip1(omega_2i, omega_2i);
+      } else {
+        throw std::invalid_argument{"Unsupported SVE vector length"};
+      }
 
       for (std::uint64_t j{}; j < m; j += cntd * 4) {
         svuint64_t x0, x1, x2, x3;
+        svuint64_t y0, y1, y2, y3;
+
+        /*
+         * 0:  0  1  2  3  4  5  6  7
+         * 1:  8  9 10 11 12 13 14 15
+         * 2: 16 17 18 19 20 21 22 23
+         * 3: 24 25 26 27 28 29 30 31
+         */
         x0 = svld1_vnum(ptrue, &src[j], 0);
         x1 = svld1_vnum(ptrue, &src[j], 1);
         x2 = svld1_vnum(ptrue, &src[j], 2);
         x3 = svld1_vnum(ptrue, &src[j], 3);
 
-        svuint64_t y0, y1, y2, y3;
+        /*
+         * 0:  0 16  1 17  2 18  3 19
+         * 1:  8 24  9 25 10 26 11 27
+         * 2:  4 20  5 21  6 22  7 23
+         * 3: 12 28 13 29 14 30 15 31
+         */
         y0 = svzip1(x0, x2);
-        y1 = svzip2(x0, x2);
-        y2 = svzip1(x1, x3);
+        y1 = svzip1(x1, x3);
+        y2 = svzip2(x0, x2);
         y3 = svzip2(x1, x3);
 
-        modmul_type::butterfly_forward(y0, y2, omega_i, omega_i_precomp);
-        modmul_type::butterfly_forward(y1, y3, omega_i_n4, omega_i_n4_precomp);
+        modmul_type::butterfly_forward(y0, y1, omega_i, omega_i_precomp);
+        modmul_type::butterfly_forward(y2, y3, omega_i_n4, omega_i_n4_precomp);
 
-        modmul_type::butterfly_forward(y0, y1, omega_2i, omega_2i_precomp);
-        modmul_type::butterfly_forward(y2, y3, omega_2i, omega_2i_precomp);
+        modmul_type::butterfly_forward(y0, y2, omega_2i, omega_2i_precomp);
+        modmul_type::butterfly_forward(y1, y3, omega_2i, omega_2i_precomp);
 
-        x0 = svuzp1(y0, y1);
-        x1 = svuzp1(y2, y3);
-        x2 = svuzp2(y0, y1);
-        x3 = svuzp2(y2, y3);
+        /*
+         * 0:  0  1  2  3  4  5  6  7
+         * 1:  8  9 10 11 12 13 14 15
+         * 2: 16 17 18 19 20 21 22 23
+         * 3: 24 25 26 27 28 29 30 31
+         */
+        x0 = svuzp1(y0, y2);
+        x1 = svuzp1(y1, y3);
+        x2 = svuzp2(y0, y2);
+        x3 = svuzp2(y1, y3);
 
         svst1_vnum(ptrue, &dst[j], 0, x0);
         svst1_vnum(ptrue, &dst[j], 1, x1);
@@ -422,27 +456,46 @@ public:
 
       for (std::uint64_t j{}; j < m; j += cntd * 4) {
         svuint64_t x0, x1, x2, x3;
+        svuint64_t y0, y1, y2, y3;
+
+        /*
+         * 0:  0  1  2  3  4  5  6  7
+         * 1:  8  9 10 11 12 13 14 15
+         * 2: 16 17 18 19 20 21 22 23
+         * 3: 24 25 26 27 28 29 30 31
+         */
         x0 = svld1_vnum(ptrue, &src[j], 0);
         x1 = svld1_vnum(ptrue, &src[j], 1);
         x2 = svld1_vnum(ptrue, &src[j], 2);
         x3 = svld1_vnum(ptrue, &src[j], 3);
 
-        svuint64_t y0, y1, y2, y3;
+        /*
+         * 0:  0 16  1 17  2 18  3 19
+         * 1:  8 24  9 25 10 26 11 27
+         * 2:  4 20  5 21  6 22  7 23
+         * 3: 12 28 13 29 14 30 15 31
+         */
         y0 = svzip1(x0, x2);
-        y1 = svzip2(x0, x2);
-        y2 = svzip1(x1, x3);
+        y1 = svzip1(x1, x3);
+        y2 = svzip2(x0, x2);
         y3 = svzip2(x1, x3);
 
-        modmul_type::butterfly_inverse(y0, y1, omega_2i, omega_2i_precomp);
-        modmul_type::butterfly_inverse(y2, y3, omega_2i, omega_2i_precomp);
+        modmul_type::butterfly_inverse(y0, y2, omega_2i, omega_2i_precomp);
+        modmul_type::butterfly_inverse(y1, y3, omega_2i, omega_2i_precomp);
 
-        modmul_type::butterfly_inverse(y0, y2, omega_i, omega_i_precomp);
-        modmul_type::butterfly_inverse(y1, y3, omega_i_n4, omega_i_n4_precomp);
+        modmul_type::butterfly_inverse(y0, y1, omega_i, omega_i_precomp);
+        modmul_type::butterfly_inverse(y2, y3, omega_i_n4, omega_i_n4_precomp);
 
-        x0 = svuzp1(y0, y1);
-        x1 = svuzp1(y2, y3);
-        x2 = svuzp2(y0, y1);
-        x3 = svuzp2(y2, y3);
+        /*
+         * 0:  0  1  2  3  4  5  6  7
+         * 1:  8  9 10 11 12 13 14 15
+         * 2: 16 17 18 19 20 21 22 23
+         * 3: 24 25 26 27 28 29 30 31
+         */
+        x0 = svuzp1(y0, y2);
+        x1 = svuzp1(y1, y3);
+        x2 = svuzp2(y0, y2);
+        x3 = svuzp2(y1, y3);
 
         svst1_vnum(ptrue, &dst[j], 0, x0);
         svst1_vnum(ptrue, &dst[j], 1, x1);

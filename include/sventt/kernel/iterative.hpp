@@ -91,10 +91,6 @@ public:
     compute_forward_helper<layer_types...>(dst, aux);
   }
 
-  static void
-  descramble_forward([[maybe_unused]] std::uint64_t *const dst,
-                     [[maybe_unused]] const std::uint64_t *const src) {}
-
   template <class vector_type> static void prepare_inverse(vector_type &aux) {
     prepare_inverse_helper<layer_types...>(aux);
   }
@@ -108,10 +104,6 @@ public:
   static void compute_inverse(std::uint64_t *const dst, const std::byte *&aux) {
     compute_inverse_helper<layer_types...>(dst, aux);
   }
-
-  static void
-  descramble_inverse([[maybe_unused]] std::uint64_t *const dst,
-                     [[maybe_unused]] const std::uint64_t *const src) {}
 };
 
 } // namespace sventt

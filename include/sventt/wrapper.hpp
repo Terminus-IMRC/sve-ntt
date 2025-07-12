@@ -80,16 +80,6 @@ public:
       throw std::logic_error{"Auxiliary data were not properly consumed"};
     }
   }
-
-  void descramble_forward(std::uint64_t *const dst,
-                          const std::uint64_t *const src) const {
-    kernel_type::descramble_forward(dst, src);
-  }
-
-  void descramble_inverse(std::uint64_t *const dst,
-                          const std::uint64_t *const src) const {
-    kernel_type::descramble_inverse(dst, src);
-  }
 };
 
 } // namespace sventt

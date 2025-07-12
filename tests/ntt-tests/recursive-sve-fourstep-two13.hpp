@@ -30,6 +30,6 @@ using kernel_type = sventt::RecursiveNTT<
     modulus_type, m,
     sventt::GenericSVELayer<modmul_type, m, inner_column_kernel_type, 8, 2,
                             sventt::TransposeParallelSVEInRegister<8, 64>>,
-    inner_row_kernel_type, 256, true>;
+    inner_row_kernel_type, true>;
 
 const std::string name{"recursive, SVE, four-step"};

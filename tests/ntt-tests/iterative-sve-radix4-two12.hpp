@@ -14,8 +14,7 @@ using kernel_type = sventt::IterativeNTT<
     sventt::RadixFourSVELayer<modmul_type, m, std::uint64_t{1} << 10, 1, false>,
     sventt::RadixFourSVELayer<modmul_type, m, std::uint64_t{1} << 8, 1, !true>,
     sventt::RadixFourSVELayer<modmul_type, m, std::uint64_t{1} << 6, 1, false>,
-    sventt::RadixTwoSVELayer<modmul_type, m, std::uint64_t{1} << 4, 1, true>,
-    sventt::RadixTwoSVELayer<modmul_type, m, std::uint64_t{1} << 3, 1, true>,
+    sventt::RadixFourSVELayer<modmul_type, m, std::uint64_t{1} << 4, 1, true>,
     sventt::RadixFourSVELayer<modmul_type, m, std::uint64_t{1} << 2, m, true>>;
 
 const std::string name{"iterative, SVE, radix-4"};

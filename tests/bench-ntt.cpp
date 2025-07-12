@@ -57,11 +57,6 @@ static void benchmark_ntt(benchmark::State &state) {
   state.SetItemsProcessed(state.iterations());
   state.counters["m"] = m;
 
-  if constexpr (is_inverse) {
-    ntt.descramble_inverse(dst, dst);
-  } else {
-    ntt.descramble_forward(dst, dst);
-  }
   for (std::uint64_t i{}; i < m; ++i) {
     if (dst[i] % modulus_type::get_modulus() != dst_ref[i]) {
       throw std::runtime_error{"Mismatch at index " + std::to_string(i)};
