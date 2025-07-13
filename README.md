@@ -97,15 +97,20 @@ built using the CMake build system.
 Note that the library itself is header-only, so you do not need to build it
 unless you want to run the tests or benchmarks.
 
-The tests and benchmarks use the [Google
-Test](https://github.com/google/googletest) and
-[Benchmark](https://github.com/google/benchmark) libraries.
+The library uses the [Boost C++ libraries](https://www.boost.org/), and the
+tests and benchmarks use the [Google Test](https://github.com/google/googletest)
+and [Benchmark](https://github.com/google/benchmark) libraries.
 On Ubuntu, you can install the required packages with the following commands:
 
 ```console
 $ sudo apt update
-$ sudo apt install build-essential cmake libgtest-dev libbenchmark-dev
+$ sudo apt install build-essential cmake libboost-dev libgtest-dev libbenchmark-dev
 ```
+
+Or, you can use the provided [Development Containers](https://containers.dev/);
+use [`aarch64-native`](.devcontainer/aarch64-native) for the native build on ARM
+processors, or [`aarch64-cross`](.devcontainer/aarch64-cross) for the
+cross-compilation.
 
 You need first to configure the build system.
 Since the SVE is not *completely* scalable, some parameters such as the number
