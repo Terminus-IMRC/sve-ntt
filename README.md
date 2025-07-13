@@ -125,8 +125,9 @@ The example combinations of these values are as follows:
 | -- | -- | -- | -- |
 | Fujitsu A64FX | Fugaku (RIKEN), Ookami (Stony Brook University) | `a64fx` | `512` |
 | Arm Neoverse V1 | AWS Graviton3/3E | `neoverse-v1` | `256` |
-| Arm Neoverse V2 | AWS Graviton4, Azure Cobalt 100, Google Axion, NVIDIA Grace | `neoverse-v2` | `128` |
+| Arm Neoverse V2 | AWS Graviton4, Google Axion, NVIDIA Grace | `neoverse-v2` | `128` |
 | Arm Neoverse V3 | NVIDIA Thor | `neoverse-v3` | `128` |
+| Arm Neoverse N2 | Alibaba Yitian 710, Azure Cobalt 100 | `neoverse-n2` | `128` |
 
 You can specify these options on build configuration.
 For example, to build and run the tests and benchmarks for the Fujitsu A64FX
