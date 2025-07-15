@@ -67,13 +67,23 @@ public:
     }
   }
 
-  static constexpr std::uint64_t add(const std::uint64_t a,
-                                     const std::uint64_t b) {
+  static constexpr std::uint64_t reduce(const std::uint64_t a) {
+    return a % modulus;
+  }
+
+  static constexpr std::uint64_t negate(const std::uint64_t a) {
+    return subtract(0, a);
+  }
+
+  static constexpr std::uint64_t add(std::uint64_t a, std::uint64_t b) {
+    a = reduce(a);
+    b = reduce(b);
     return (a < modulus - b) ? (a + b) : (a + b - modulus);
   }
 
-  static constexpr std::uint64_t subtract(const std::uint64_t a,
-                                          const std::uint64_t b) {
+  static constexpr std::uint64_t subtract(std::uint64_t a, std::uint64_t b) {
+    a = reduce(a);
+    b = reduce(b);
     return (a >= b) ? (a - b) : (a - b + modulus);
   }
 
