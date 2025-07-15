@@ -25,7 +25,15 @@ using ModulusTypes = ::testing::Types<
     /* A random 64-bit prime. */
     sventt::Modulus<UINT64_C(0xa3b2'5f40'0c7a'8001), 5>,
     /* A random 63-bit prime. */
-    sventt::Modulus<UINT64_C(0x41d3'3d0d'1fbf'8001), 6>>;
+    sventt::Modulus<UINT64_C(0x41d3'3d0d'1fbf'8001), 6>,
+    /* A random 62-bit prime. */
+    sventt::Modulus<UINT64_C(0x3164'c5d5'9b09'0001), 13>,
+    /* A random 61-bit prime. */
+    sventt::Modulus<UINT64_C(0x1e4a'0e19'e454'8001), 3>,
+    /* A random 60-bit prime. */
+    sventt::Modulus<UINT64_C(0x08aa'9029'7f87'0001), 3>,
+    /* The fifth Fermat prime. */
+    sventt::Modulus<UINT64_C(0x0000'0000'0001'0001), 3>>;
 
 TYPED_TEST_SUITE(ModulusFixture, ModulusTypes);
 

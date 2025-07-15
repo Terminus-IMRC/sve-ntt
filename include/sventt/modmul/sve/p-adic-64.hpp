@@ -80,10 +80,7 @@ public:
     const svbool_t ptrue{svptrue_b8()};
 
     svuint64_t y0;
-    if constexpr (std::bit_width(N) <= 62) {
-      y0 = svadd_x(ptrue, x0, x1);
-      y0 = svmin_x(ptrue, y0, svsub_x(ptrue, y0, N * 2));
-    } else if constexpr (std::bit_width(N) == 63) {
+    if constexpr (std::bit_width(N) <= 63) {
       y0 = svadd_x(ptrue, x0, x1);
       y0 = svmin_x(ptrue, y0, svsub_x(ptrue, y0, N));
     } else {
@@ -93,9 +90,7 @@ public:
     }
 
     svuint64_t y1{svsub_x(ptrue, x0, x1)};
-    if constexpr (std::bit_width(N) <= 62) {
-      y1 = svmin_x(ptrue, y1, svadd_x(ptrue, y1, N * 2));
-    } else if constexpr (std::bit_width(N) == 63) {
+    if constexpr (std::bit_width(N) <= 63) {
       y1 = svmin_x(ptrue, y1, svadd_x(ptrue, y1, N));
     } else {
       y1 = svadd_m(svcmplt(ptrue, x0, x1), y1, N);
@@ -111,10 +106,7 @@ public:
     const svbool_t ptrue{svptrue_b8()};
 
     svuint64_t y0;
-    if constexpr (std::bit_width(N) <= 62) {
-      y0 = svadd_x(ptrue, x0, x1);
-      y0 = svmin_x(ptrue, y0, svsub_x(ptrue, y0, N * 2));
-    } else if constexpr (std::bit_width(N) == 63) {
+    if constexpr (std::bit_width(N) <= 63) {
       y0 = svadd_x(ptrue, x0, x1);
       y0 = svmin_x(ptrue, y0, svsub_x(ptrue, y0, N));
     } else {
@@ -124,9 +116,7 @@ public:
     }
 
     svuint64_t y1;
-    if constexpr (std::bit_width(N) <= 62) {
-      y1 = svsub_x(ptrue, svadd_x(ptrue, x0, N * 2), x1);
-    } else if constexpr (std::bit_width(N) == 63) {
+    if constexpr (std::bit_width(N) <= 63) {
       y1 = svsub_x(ptrue, svadd_x(ptrue, x0, N), x1);
     } else {
       y1 = svsub_x(ptrue, x0, x1);
@@ -136,9 +126,7 @@ public:
     const svuint64_t q{svmul_x(ptrue, y1, wp)};
     const svuint64_t y1w_high{svmulh_x(ptrue, y1, w)};
     const svuint64_t qN_high{svmulh_x(ptrue, q, N)};
-    if constexpr (std::bit_width(N) <= 62) {
-      y1 = svsub_x(ptrue, svadd_x(ptrue, y1w_high, N), qN_high);
-    } else if constexpr (std::bit_width(N) == 63) {
+    if constexpr (std::bit_width(N) <= 63) {
       y1 = svsub_x(ptrue, y1w_high, qN_high);
       y1 = svmin_x(ptrue, y1, svadd_x(ptrue, y1, N));
     } else {
@@ -164,9 +152,7 @@ public:
     const svuint64_t q0{svmul_x(ptrue, y0, w0p)};
     const svuint64_t y0w0_high{svmulh_x(ptrue, y0, w0)};
     const svuint64_t q0N_high{svmulh_x(ptrue, q0, N)};
-    if constexpr (std::bit_width(N) <= 62) {
-      y0 = svsub_x(ptrue, svadd_x(ptrue, y0w0_high, N), q0N_high);
-    } else if constexpr (std::bit_width(N) == 63) {
+    if constexpr (std::bit_width(N) <= 63) {
       y0 = svsub_x(ptrue, y0w0_high, q0N_high);
       y0 = svmin_x(ptrue, y0, svadd_x(ptrue, y0, N));
     } else {
@@ -175,9 +161,7 @@ public:
     }
 
     svuint64_t y1;
-    if constexpr (std::bit_width(N) <= 62) {
-      y1 = svsub_x(ptrue, svadd_x(ptrue, x0, N * 2), x1);
-    } else if constexpr (std::bit_width(N) == 63) {
+    if constexpr (std::bit_width(N) <= 63) {
       y1 = svsub_x(ptrue, svadd_x(ptrue, x0, N), x1);
     } else {
       y1 = svsub_x(ptrue, x0, x1);
@@ -187,9 +171,7 @@ public:
     const svuint64_t q1{svmul_x(ptrue, y1, w1p)};
     const svuint64_t y1w1_high{svmulh_x(ptrue, y1, w1)};
     const svuint64_t q1N_high{svmulh_x(ptrue, q1, N)};
-    if constexpr (std::bit_width(N) <= 62) {
-      y1 = svsub_x(ptrue, svadd_x(ptrue, y1w1_high, N), q1N_high);
-    } else if constexpr (std::bit_width(N) == 63) {
+    if constexpr (std::bit_width(N) <= 63) {
       y1 = svsub_x(ptrue, y1w1_high, q1N_high);
       y1 = svmin_x(ptrue, y1, svadd_x(ptrue, y1, N));
     } else {
@@ -213,9 +195,7 @@ public:
     const svuint64_t q{svmul_x(ptrue, x1, wp)};
     const svuint64_t x1w_high{svmulh_x(ptrue, x1, w)};
     const svuint64_t qN_high{svmulh_x(ptrue, q, N)};
-    if constexpr (std::bit_width(N) <= 62) {
-      x1 = svsub_x(ptrue, svadd_x(ptrue, x1w_high, N), qN_high);
-    } else if constexpr (std::bit_width(N) == 63) {
+    if constexpr (std::bit_width(N) <= 63) {
       x1 = svsub_x(ptrue, x1w_high, qN_high);
       x1 = svmin_x(ptrue, x1, svadd_x(ptrue, x1, N));
     } else {
