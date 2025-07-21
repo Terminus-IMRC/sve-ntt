@@ -22,12 +22,10 @@ gtest_discover_tests(test-modulus)
 add_executable(bench-stream-cmg bench-stream-cmg.cpp)
 target_compile_options(bench-stream-cmg PRIVATE -fopenmp)
 target_link_libraries(bench-stream-cmg benchmark::benchmark_main -fopenmp)
-add_test(bench-stream-cmg bench-stream-cmg)
 
 add_executable(bench-transpose bench-transpose.cpp)
 target_compile_options(bench-transpose PRIVATE ${SVENTT_CXX_FLAGS})
 target_link_libraries(bench-transpose ${SVENTT_LINK_LIBRARIES} benchmark::benchmark_main)
-add_test(bench-transpose bench-transpose)
 
 set(ntt_test_list
     # iterative-scalar-radix2-two5
