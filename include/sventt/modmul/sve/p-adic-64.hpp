@@ -59,6 +59,10 @@ public:
     return c;
   }
 
+  static svuint64_t multiply_normalize(const svuint64_t a, const svuint64_t b) {
+    return multiply_normalize(a, b, precompute(b));
+  }
+
   static svuint64_t multiply_normalize(const svuint64_t a, const svuint64_t b,
                                        const svuint64_t bp) {
     constexpr std::uint64_t N{modulus_type::get_modulus()};
