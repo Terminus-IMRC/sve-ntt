@@ -1,0 +1,32 @@
+on: push
+
+jobs:
+
+  run-tests-native:
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      matrix:
+        cxx-compiler: [g++]
+    defaults:
+      run:
+        shell: bash --noprofile --norc -euxo pipefail {0}
+    steps:
+      - name: Show system information
+        run: |
+          lscpu
+          lshw
+          numactl --hardware
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+      - name: Build and run tests
+        uses: devcontainers/ci@v0.3
+        with:
+          configFile: .devcontainer/aarch64-native/devcontainer.json
+          runCmd: |
+            set -euxo pipefail
+            cmake . \
+              -D CMAKE_BUILD_TYPE='Release' \
+              -D CMAKE_CXX_COMPILER='${{ matrix.cxx-compiler }}' \
+              -D CMAKE_CXX_FLAGS='-mcpu=native -mtune=native -msve-vector-bits=128'
+            cmake --build . -v
+            cmake --build . --target test
