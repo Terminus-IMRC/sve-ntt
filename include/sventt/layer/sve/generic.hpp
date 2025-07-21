@@ -69,8 +69,7 @@ public:
     }
   };
 
-  template <class vector_type>
-  static void prepare_forward(vector_type &aux) {
+  template <class vector_type> static void prepare_forward(vector_type &aux) {
     const auto precompute{
         [&aux](const std::uint64_t num_elements, std::uint64_t &omega,
                const std::uint64_t factor, const bool precompute_precompute) {
@@ -106,7 +105,7 @@ public:
     }
 
     aux.template reinterpret_at<std::uint64_t>(aux_pos_after_size -
-                                      sizeof(std::uint64_t)) =
+                                               sizeof(std::uint64_t)) =
         aux.size() - aux_pos_after_size;
   }
 
@@ -174,7 +173,6 @@ public:
                                    const std::uint64_t j_end,
                                    const std::uint64_t stride_dst,
                                    const std::uint64_t stride_src) {
-    constexpr std::uint64_t N{modulus_type::get_modulus()};
     constexpr std::uint64_t unity{modmul_type::to_montgomery(1)};
     constexpr std::uint64_t inner_m{inner_kernel_type::get_m()};
     const svbool_t ptrue{svptrue_b8()};
@@ -192,11 +190,10 @@ public:
         for (std::uint64_t i{}; i < m / inner_m; i += cntd) {
           svuint64_t t;
           t = svld1(ptrue, &src[stride_src * j + i]);
-          t = modmul_type::multiply(t, omega_ij);
+          t = modmul_type::multiply_normalize(t, omega_ij);
           svst1(ptrue, &dst[stride_dst * j + i], t);
-          omega_ij = modmul_type::multiply(omega_ij, omega_j_cntd,
-                                           omega_j_cntd_precomp);
-          omega_ij = svmin_x(ptrue, omega_ij, svsub_x(ptrue, omega_ij, N));
+          omega_ij = modmul_type::multiply_normalize(omega_ij, omega_j_cntd,
+                                                     omega_j_cntd_precomp);
         }
       } else if constexpr (twiddle_unroll_count == 2) {
         svuint64_t omega_ij_0, omega_ij_1;
@@ -205,31 +202,24 @@ public:
         omega_j_cntd = svdup_lane(omega_ij_0, 0);
         omega_j_cntd_precomp = modmul_type::precompute(omega_j_cntd);
         omega_ij_0 = svdup_u64_m(omega_ij_0, pfirst, unity);
-        omega_ij_1 = modmul_type::multiply(omega_ij_0, omega_j_cntd,
-                                           omega_j_cntd_precomp);
-        omega_ij_1 = svmin_x(ptrue, omega_ij_1, svsub_x(ptrue, omega_ij_1, N));
-        omega_j_cntd = modmul_type::multiply(omega_ij_1, omega_j_cntd,
-                                             omega_j_cntd_precomp);
-        omega_j_cntd =
-            svmin_x(ptrue, omega_j_cntd, svsub_x(ptrue, omega_j_cntd, N));
+        omega_ij_1 = modmul_type::multiply_normalize(omega_ij_0, omega_j_cntd,
+                                                     omega_j_cntd_precomp);
+        omega_j_cntd = modmul_type::multiply_normalize(omega_ij_1, omega_j_cntd,
+                                                       omega_j_cntd_precomp);
         omega_j_cntd = svdup_lane(omega_j_cntd, 0);
         omega_j_cntd_precomp = modmul_type::precompute(omega_j_cntd);
         for (std::uint64_t i{}; i < m / inner_m; i += cntd * 2) {
           svuint64_t t0, t1;
           t0 = svld1(ptrue, &src[stride_src * j + i + cntd * 0]);
           t1 = svld1(ptrue, &src[stride_src * j + i + cntd * 1]);
-          t0 = modmul_type::multiply(t0, omega_ij_0);
-          t1 = modmul_type::multiply(t1, omega_ij_1);
+          t0 = modmul_type::multiply_normalize(t0, omega_ij_0);
+          t1 = modmul_type::multiply_normalize(t1, omega_ij_1);
           svst1(ptrue, &dst[stride_dst * j + i + cntd * 0], t0);
           svst1(ptrue, &dst[stride_dst * j + i + cntd * 1], t1);
-          omega_ij_0 = modmul_type::multiply(omega_ij_0, omega_j_cntd,
-                                             omega_j_cntd_precomp);
-          omega_ij_0 =
-              svmin_x(ptrue, omega_ij_0, svsub_x(ptrue, omega_ij_0, N));
-          omega_ij_1 = modmul_type::multiply(omega_ij_1, omega_j_cntd,
-                                             omega_j_cntd_precomp);
-          omega_ij_1 =
-              svmin_x(ptrue, omega_ij_1, svsub_x(ptrue, omega_ij_1, N));
+          omega_ij_0 = modmul_type::multiply_normalize(omega_ij_0, omega_j_cntd,
+                                                       omega_j_cntd_precomp);
+          omega_ij_1 = modmul_type::multiply_normalize(omega_ij_1, omega_j_cntd,
+                                                       omega_j_cntd_precomp);
         }
       } else if constexpr (twiddle_unroll_count == 4) {
         svuint64_t omega_ij_0, omega_ij_1, omega_ij_2, omega_ij_3;
@@ -238,19 +228,14 @@ public:
         omega_j_cntd = svdup_lane(omega_ij_0, 0);
         omega_j_cntd_precomp = modmul_type::precompute(omega_j_cntd);
         omega_ij_0 = svdup_u64_m(omega_ij_0, pfirst, unity);
-        omega_ij_1 = modmul_type::multiply(omega_ij_0, omega_j_cntd,
-                                           omega_j_cntd_precomp);
-        omega_ij_1 = svmin_x(ptrue, omega_ij_1, svsub_x(ptrue, omega_ij_1, N));
-        omega_ij_2 = modmul_type::multiply(omega_ij_1, omega_j_cntd,
-                                           omega_j_cntd_precomp);
-        omega_ij_2 = svmin_x(ptrue, omega_ij_2, svsub_x(ptrue, omega_ij_2, N));
-        omega_ij_3 = modmul_type::multiply(omega_ij_2, omega_j_cntd,
-                                           omega_j_cntd_precomp);
-        omega_ij_3 = svmin_x(ptrue, omega_ij_3, svsub_x(ptrue, omega_ij_3, N));
-        omega_j_cntd = modmul_type::multiply(omega_ij_3, omega_j_cntd,
-                                             omega_j_cntd_precomp);
-        omega_j_cntd =
-            svmin_x(ptrue, omega_j_cntd, svsub_x(ptrue, omega_j_cntd, N));
+        omega_ij_1 = modmul_type::multiply_normalize(omega_ij_0, omega_j_cntd,
+                                                     omega_j_cntd_precomp);
+        omega_ij_2 = modmul_type::multiply_normalize(omega_ij_1, omega_j_cntd,
+                                                     omega_j_cntd_precomp);
+        omega_ij_3 = modmul_type::multiply_normalize(omega_ij_2, omega_j_cntd,
+                                                     omega_j_cntd_precomp);
+        omega_j_cntd = modmul_type::multiply_normalize(omega_ij_3, omega_j_cntd,
+                                                       omega_j_cntd_precomp);
         omega_j_cntd = svdup_lane(omega_j_cntd, 0);
         omega_j_cntd_precomp = modmul_type::precompute(omega_j_cntd);
         for (std::uint64_t i{}; i < m / inner_m; i += cntd * 4) {
@@ -259,30 +244,22 @@ public:
           t1 = svld1(ptrue, &src[stride_src * j + i + cntd * 1]);
           t2 = svld1(ptrue, &src[stride_src * j + i + cntd * 2]);
           t3 = svld1(ptrue, &src[stride_src * j + i + cntd * 3]);
-          t0 = modmul_type::multiply(t0, omega_ij_0);
-          t1 = modmul_type::multiply(t1, omega_ij_1);
-          t2 = modmul_type::multiply(t2, omega_ij_2);
-          t3 = modmul_type::multiply(t3, omega_ij_3);
+          t0 = modmul_type::multiply_normalize(t0, omega_ij_0);
+          t1 = modmul_type::multiply_normalize(t1, omega_ij_1);
+          t2 = modmul_type::multiply_normalize(t2, omega_ij_2);
+          t3 = modmul_type::multiply_normalize(t3, omega_ij_3);
           svst1(ptrue, &dst[stride_dst * j + i + cntd * 0], t0);
           svst1(ptrue, &dst[stride_dst * j + i + cntd * 1], t1);
           svst1(ptrue, &dst[stride_dst * j + i + cntd * 2], t2);
           svst1(ptrue, &dst[stride_dst * j + i + cntd * 3], t3);
-          omega_ij_0 = modmul_type::multiply(omega_ij_0, omega_j_cntd,
-                                             omega_j_cntd_precomp);
-          omega_ij_0 =
-              svmin_x(ptrue, omega_ij_0, svsub_x(ptrue, omega_ij_0, N));
-          omega_ij_1 = modmul_type::multiply(omega_ij_1, omega_j_cntd,
-                                             omega_j_cntd_precomp);
-          omega_ij_1 =
-              svmin_x(ptrue, omega_ij_1, svsub_x(ptrue, omega_ij_1, N));
-          omega_ij_2 = modmul_type::multiply(omega_ij_2, omega_j_cntd,
-                                             omega_j_cntd_precomp);
-          omega_ij_2 =
-              svmin_x(ptrue, omega_ij_2, svsub_x(ptrue, omega_ij_2, N));
-          omega_ij_3 = modmul_type::multiply(omega_ij_3, omega_j_cntd,
-                                             omega_j_cntd_precomp);
-          omega_ij_3 =
-              svmin_x(ptrue, omega_ij_3, svsub_x(ptrue, omega_ij_3, N));
+          omega_ij_0 = modmul_type::multiply_normalize(omega_ij_0, omega_j_cntd,
+                                                       omega_j_cntd_precomp);
+          omega_ij_1 = modmul_type::multiply_normalize(omega_ij_1, omega_j_cntd,
+                                                       omega_j_cntd_precomp);
+          omega_ij_2 = modmul_type::multiply_normalize(omega_ij_2, omega_j_cntd,
+                                                       omega_j_cntd_precomp);
+          omega_ij_3 = modmul_type::multiply_normalize(omega_ij_3, omega_j_cntd,
+                                                       omega_j_cntd_precomp);
         }
       } else {
         throw std::invalid_argument{"Unsupported twiddle unroll count"};
@@ -311,8 +288,7 @@ public:
     compute_forward(dst, dst, aux);
   }
 
-  template <class vector_type>
-  static void prepare_inverse(vector_type &aux) {
+  template <class vector_type> static void prepare_inverse(vector_type &aux) {
     const auto precompute{
         [&aux](const std::uint64_t num_elements, std::uint64_t &omega,
                const std::uint64_t factor, const bool precompute_precompute) {
@@ -351,7 +327,7 @@ public:
     inner_kernel_type::prepare_inverse(aux);
 
     aux.template reinterpret_at<std::uint64_t>(aux_pos_after_size -
-                                      sizeof(std::uint64_t)) =
+                                               sizeof(std::uint64_t)) =
         aux.size() - aux_pos_after_size;
   }
 
@@ -362,7 +338,6 @@ public:
                                    const std::uint64_t j_end,
                                    const std::uint64_t stride_dst,
                                    const std::uint64_t stride_src) {
-    constexpr std::uint64_t N{modulus_type::get_modulus()};
     constexpr std::uint64_t unity{modmul_type::to_montgomery(1)};
     constexpr std::uint64_t inner_m{inner_kernel_type::get_m()};
     const svbool_t ptrue{svptrue_b8()};
@@ -378,11 +353,10 @@ public:
       for (std::uint64_t i{}; i < m / inner_m; i += cntd) {
         svuint64_t t;
         t = svld1(ptrue, &src[stride_src * j + i]);
-        t = modmul_type::multiply(t, omega_ij);
+        t = modmul_type::multiply_normalize(t, omega_ij);
         svst1(ptrue, &dst[stride_dst * j + i], t);
-        omega_ij =
-            modmul_type::multiply(omega_ij, omega_j_cntd, omega_j_cntd_precomp);
-        omega_ij = svmin_x(ptrue, omega_ij, svsub_x(ptrue, omega_ij, N));
+        omega_ij = modmul_type::multiply_normalize(omega_ij, omega_j_cntd,
+                                                   omega_j_cntd_precomp);
       }
     }
   }
