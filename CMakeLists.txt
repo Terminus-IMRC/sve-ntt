@@ -14,3 +14,4 @@ find_package(Boost REQUIRED)
 
 add_subdirectory(include)
 add_subdirectory(tests)
+add_subdirectory(examples)

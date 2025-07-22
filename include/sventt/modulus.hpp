@@ -92,6 +92,11 @@ public:
     return a * static_cast<unsigned __int128>(b) % modulus;
   }
 
+  static constexpr std::uint64_t divide(const std::uint64_t a,
+                                        const std::uint64_t b) {
+    return multiply(a, invert(b));
+  }
+
   static constexpr std::uint64_t power(std::uint64_t a, std::uint64_t e) {
     std::uint64_t b{1};
     for (; e; e >>= 1) {
