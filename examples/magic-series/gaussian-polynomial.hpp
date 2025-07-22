@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: Apache-2.0
+// SPDX-FileCopyrightText: Copyright © 2025 Yukimasa Sugizaki
+
 #ifndef SVENTT_EXAMPLES_MAGIC_SERIES_GAUSSIAN_POLYNOMIAL_HPP_INCLUDED
 #define SVENTT_EXAMPLES_MAGIC_SERIES_GAUSSIAN_POLYNOMIAL_HPP_INCLUDED
 
@@ -6,6 +9,10 @@
 #include <stdexcept>
 #include <type_traits>
 #include <vector>
+
+#include <omp.h>
+
+#include "../../tests/utility.hpp"
 
 #include "restricted-partition.hpp"
 
@@ -143,6 +150,10 @@ static std::uint64_t calculate_gaussian_polynomial_coefficient(
     const std::uint64_t n, const std::uint64_t k, const std::uint64_t d,
     const ntt_type &ntt) {
   using modulus_type = ntt_type::modulus_type;
+  using modmul_type = sventt::PAdic64SVE<modulus_type>;
+  const bool allocate_huge_pages{false};
+
+  const svbool_t ptrue{svptrue_b8()};
 
   if (d > k * (n - k)) {
     throw std::invalid_argument{"d is out of range"};
@@ -159,12 +170,16 @@ static std::uint64_t calculate_gaussian_polynomial_coefficient(
 
   GaussianPolynomialNumerator<modulus_type> numerator(n, k);
 
-  std::vector<std::uint64_t> denominator(ntt_size);
+  sventt::PageMemory<std::uint64_t> denominator(ntt_size, allocate_huge_pages);
   calculate_q_pochhammer<modulus_type>(
       denominator | std::views::drop(chunk_size), k);
   ntt.compute_forward(denominator.data());
+  for (std::uint64_t i = 0; i < ntt_size; ++i) {
+    denominator[i] = modmul_type::to_montgomery(denominator[i]);
+  }
 
-  std::vector<std::uint64_t> denominator_inverse(ntt_size);
+  sventt::PageMemory<std::uint64_t> denominator_inverse(ntt_size,
+                                                        allocate_huge_pages);
   {
     RestrictedPartition<modulus_type> partition(k);
     for (std::uint64_t i{}; i < chunk_size; ++i) {
@@ -173,29 +188,56 @@ static std::uint64_t calculate_gaussian_polynomial_coefficient(
     }
   }
   ntt.compute_forward(denominator_inverse.data());
+  for (std::uint64_t i = 0; i < ntt_size; ++i) {
+    denominator_inverse[i] = modmul_type::to_montgomery(denominator_inverse[i]);
+  }
 
-  std::vector<std::uint64_t> coefficients(ntt_size);
+  sventt::PageMemory<std::uint64_t> coefficients(ntt_size, allocate_huge_pages);
   for (std::uint64_t i{}; i < d; i += chunk_size) {
     numerator.subtract_next(coefficients.data(), chunk_size);
+
     ntt.compute_forward(coefficients.data());
-    for (std::uint64_t j{}; j < ntt_size; ++j) {
-      coefficients[j] =
-          modulus_type::multiply(coefficients[j], denominator_inverse[j]);
+
+#pragma omp parallel
+    {
+      const auto [part_offset, part_size] = partition_static(
+          ntt_size, omp_get_num_threads(), omp_get_thread_num(), sventt::cntd);
+      for (std::uint64_t j = part_offset; j < part_offset + part_size;
+           j += sventt::cntd) {
+        svst1(ptrue, &coefficients[j],
+              modmul_type::multiply_normalize(
+                  svld1(ptrue, &coefficients[j]),
+                  svld1(ptrue, &denominator_inverse[j])));
+      }
     }
+
     ntt.compute_inverse(coefficients.data());
 
     if (d < i + chunk_size) {
       return coefficients.at(d - i);
     }
 
-    std::ranges::fill(coefficients | std::views::drop(chunk_size), 0);
+    memset_parallel(&coefficients[chunk_size], 0,
+                    sizeof(std::uint64_t) * (ntt_size - chunk_size));
+
     ntt.compute_forward(coefficients.data());
-    for (std::uint64_t j{}; j < ntt_size; ++j) {
-      coefficients[j] = modulus_type::multiply(coefficients[j], denominator[j]);
+
+#pragma omp parallel
+    {
+      const auto [part_offset, part_size] = partition_static(
+          ntt_size, omp_get_num_threads(), omp_get_thread_num(), sventt::cntd);
+      for (std::uint64_t j = part_offset; j < part_offset + part_size;
+           j += sventt::cntd) {
+        svst1(ptrue, &coefficients[j],
+              modmul_type::multiply_normalize(svld1(ptrue, &coefficients[j]),
+                                              svld1(ptrue, &denominator[j])));
+      }
     }
+
     ntt.compute_inverse(coefficients.data());
 
-    std::ranges::fill(coefficients | std::views::drop(chunk_size), 0);
+    memset_parallel(&coefficients[chunk_size], 0,
+                    sizeof(std::uint64_t) * (ntt_size - chunk_size));
   }
 
   throw std::runtime_error{"internal error"};
