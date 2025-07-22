@@ -26,6 +26,41 @@ public:
     return modulus_type::multiply(b, modulus_type::invert(-N));
   }
 
+  /* Returns N if b is zero, but it does not seem to be problematic. */
+  static svuint64_t from_montgomery(const svuint64_t b) {
+    constexpr std::uint64_t N{modulus_type::get_modulus()};
+    constexpr std::uint64_t N_inv{modulus_type::get_montgomery_inverse()};
+    const svbool_t ptrue{svptrue_b8()};
+    const svuint64_t q{svmul_x(ptrue, b, N_inv)};
+    const svuint64_t qN1{svmulh_x(ptrue, q, N)};
+    const svuint64_t c{svsubr_x(ptrue, qN1, N)};
+    return c;
+  }
+
+  static svuint64_t add(const svuint64_t a, const svuint64_t b) {
+    constexpr std::uint64_t N{modulus_type::get_modulus()};
+    const svbool_t ptrue{svptrue_b8()};
+
+    if constexpr (std::bit_width(N) <= 63) {
+      const svuint64_t c{svadd_x(ptrue, a, b)};
+      return svmin_x(ptrue, c, svsub_x(ptrue, c, N));
+    } else {
+      return subtract(a, svsubr_x(ptrue, b, N));
+    }
+  }
+
+  static svuint64_t subtract(const svuint64_t a, const svuint64_t b) {
+    constexpr std::uint64_t N{modulus_type::get_modulus()};
+    const svbool_t ptrue{svptrue_b8()};
+
+    const svuint64_t c{svsub_x(ptrue, a, b)};
+    if constexpr (std::bit_width(N) <= 63) {
+      return svmin_x(ptrue, c, svadd_x(ptrue, c, N));
+    } else {
+      return svadd_m(svcmplt(ptrue, a, b), c, N);
+    }
+  }
+
   static std::uint64_t precompute(const std::uint64_t b) {
     constexpr std::uint64_t N_inv{modulus_type::get_montgomery_inverse()};
     return b * N_inv;
